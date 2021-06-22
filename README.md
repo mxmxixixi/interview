@@ -122,3 +122,166 @@
 - const arr = [10,0,10,20,30,40,50,60,70].map((num,index)=>parseInt(num,index))//[10, NaN, 2, 6, 12, 20, 30, 42, 56]
 
 #### 第四道 介绍下 Set、Map、WeakSet 和 WeakMap 的区别
+
+- Set是类数组无重复元素的结构，所有可以迭代的元素都可以转成Set结构，同时Set结构也能转为数组结构，key与value值相同
+- Map是一个key可以为任何值，value可以为任何值的对象，可以转换为数组，以及对象，相对比对象结构会更加灵活
+- WeakSet 和 WeakMap都是对对象的弱引用，WeakSet他的成员值只能是对象，WeakMap的key值只能是对象，都不可以被遍历
+
+#### 第五道  下面代码中 a 在什么情况下会打印 1？
+
+- 主要考点，在a与1 2 3比较的过程中会出现隐式类型的转换，在比较过程中改变a的值，来达到满足所有的条件
+
+```javascript
+var a = ?;
+if(a == 1 && a == 2 && a == 3){
+ 	console.log(1);
+}
+
+//第一种：对象的隐式类型转换，转换类型会进行调用toString方法、valueOf方法
+var a = {
+  i:1,
+  toString:()=>{
+    return a.i++
+  }
+}
+var a = {
+  i:1,
+  valueOf:()=>{
+    return a.i++
+  }
+}
+//第二种：数组的隐式类型转换，转换是会进行调toString、join方法
+//把shift方法赋值给toString方法，每次调用toString都会走shift方法
+let a = [1,2,3];
+a.toString = a.shift;
+
+
+let a = [1,2,3];
+a.join = a.shift;
+//第三种：Symbol.toPrimitive
+let a = {[Symbol.toPrimitive]:((i)=>()=>i++)(0)}
+```
+
+#### 第六道 函数作用域，var变量
+
+```javascript
+var a = 10;
+(function () {
+    console.log(a)
+    a = 5
+ 		console.log(a)
+    console.log(window.a)
+    var a = 20;
+    console.log(a)
+})()
+//undefined 10 20
+// 1. 立即执行函数内的 var a = 20; 会先进行变量提升。 var a = undefined;会提升到函数作用域顶部
+// 2. 这时候console.log(a) 的a为undefined
+//  a = 5,此时函数作用域中的a被赋值5，
+// 3. console.log(window.a)，这时候取的是window的a变量，全局作用域下的var定义的变量会挂载到window上
+// 4. 运行到var a = 20; 这时候会在当前作用域查找a变量，找到了以后赋值为20
+// 5. 这时候输出console.log(a) 这时候a的值为20
+
+
+
+var a = 10;
+(function () {
+    console.log(a)
+    a = 5
+    console.log(window.a)
+    console.log(a)
+})()
+//10 5 5
+//演变后的函数作用域中没有定义a变量，直接a=5修改全局的变量a
+```
+
+#### 第七道 sort() 排序
+
+- sort()默认情况下按照升序排列数组项，为了实现排序，sort()方法会调用每个数组项的toString(),然后得到比较的字符串；改变原数组，不是纯函数
+
+- sort()在进行比较字符串时，数字无法正常排序，因此sort()方法可以接受一个比较函数作为参数，以便我们指定哪个值在哪个值的前面；比较函数接收两个参数(默认升序)，如果第一个参数应该位于第二个之前则返回一个负数，如果两个参数相等则返回0，如果第一个参数应该位于第二个之后则返回一个正数。
+
+```javascript
+//使用 sort() 对数组 [3, 15, 8, 29, 102, 22] 进行排序，输出结果
+返回结果：[102,15,22,29,3,8]
+
+```
+
+#### 第八道 未解答
+
+```javascript
+var obj = {
+    '2': 3,
+    '3': 4,
+    'length': 2,
+    'splice': Array.prototype.splice,
+    'push': Array.prototype.push
+}
+obj.push(1)
+obj.push(2)
+console.log(obj)
+```
+
+#### 第九道 call 和 apply 的区别是什么，哪个性能更好一些
+
+-  call 和 apply 都是用来改变this的指向，函数接受的第一个参数都是代表this
+- call接收this参数和多个其他参数
+- apply接受this参数和一个数组
+- 使用es6的解构赋值call可以替代apply
+- call 的性能要比 apply 好一些（尤其是传递给函数的参数超过三个的时候）
+  - apply 的源码执行比较复杂
+  - 由于 apply 中定义的参数格式（数组），使得被调用之后需要做更多的事
+
+#### 第十道 实现 (5).add(3).minus(2) 功能
+
+- 主要考在Number.prototype进行添加函数
+
+```javascript
+ function addmin(){
+   function add(n){
+     return this+n
+   }
+   function minus(n){
+     return this-n
+   }
+   Number.prototype.add = add
+   Number.prototype.minus = minus
+ }
+addmin()
+console.log((5).add(3).minus(2))
+```
+
+#### 第十一道 **var** a = {n: 1}; **var** b = a; a.x = a = {n: 2}; console.log(a.x) 	 console.log(b.x)
+
+- 引用类型的赋值时地址引用
+- 赋值运算符与.运算符的优先级：.运算符的优先级高于赋值运算符
+
+```javascript
+var a = {n: 1};
+var b = a;//此时a、b都指向堆中的地址
+a.x = a = {n: 2};//先进行赋值a.x的值,之后变量a背更改新的堆地址指向，a = {n: 2},b= {n: 1,x:{n:2}}
+console.log(a.x)//undefined
+console.log(b.x)//{n:2}
+```
+
+#### 第十二道 某公司 1 到 12 月份的销售额存在一个对象里面，如下：{1:222, 2:123, 5:888}，请把数据处理为如下结构：[222, 123, null, null, 888, null, null, null, null, null, null, null]。
+
+```javascript
+const data = []
+const obj = {1:222, 2:123, 5:888}
+for(let i=1;i<=12;i++){
+  data.push(obj[i] || null )
+}
+
+let obj = {1:222, 2:123, 5:888};
+const result = Array.from({ length: 12 }).map((_, index) => obj[index + 1] || null);
+```
+
+#### 第十三道 箭头函数与普通函数（function）的区别是什么？构造函数（function）可以使用 new 生成实例，那么箭头函数可以吗？为什么？
+
+- 箭头函数与普通函数写法不同，箭头函数是普通函数的简写
+- 方法中的this指向不同，箭头函数的this永远取父级作用域的值，普通函数的this取决于它的执行时机
+- 箭头函数不可以使用 arguments 对象，该对象在函数体内不存在。如果要用，可以用 rest 参数代替
+- 箭头函数不可以使用 yield 命令，因此箭头函数不能用作 Generator 函数。
+- 箭头函数不可以使用new生成实例，生成实例的过程，函数的this会指向实例，箭头函数的this已经固定
+- 箭头函数没有 prototype 属性 ，而 new 命令在执行时需要将构造函数的 prototype 赋值给新的对象的_proto__
